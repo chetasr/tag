@@ -1,0 +1,36 @@
+#!/usr/bin/python
+import requests, shutil, sys, colorama
+
+colorama.init()
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def uploadFile(filename):
+    with open(filename, 'rb') as f:
+        try:
+            res = requests.put("https://transfer.sh/" + filename, f)
+            f.close()
+            return res.text
+        except Exception as e:
+            print e
+            return ''
+
+def downloadFile(url, filename):
+    r = requests.get(url, stream=True)
+    print 'Downloaded. Copying file...'
+    if r.status_code == 200:
+        with open(filename, 'wb') as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
+
+if __name__=='__main__':
+    print bcolors.HEADER + 'Downloading ' + bcolors.ENDC + sys.argv[1] + bcolors.HEADER + ' as ' + bcolors.ENDC + ''.join(hex(ord(x))[2:] for x in sys.argv[1])[:10] + sys.argv[1][-4:]
+    downloadFile(sys.argv[1], ''.join(hex(ord(x))[2:] for x in sys.argv[1])[:10] + sys.argv[1][-4:])
+    print bcolors.OKGREEN + 'Succesful' + bcolors.ENDC
