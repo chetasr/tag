@@ -107,18 +107,22 @@ def fingerprint(fn):
         print(bcolors.FAIL + "Connection failed: " + bcolors.ENDC, exc.message)
         sys.exit(1)
 
-    if results['results'] == []:
-        print "Could not find any metadata!"
-        title = raw_input("Enter title: ")
-        artists = raw_input("Enter artists (separated by ;): ")
-        album = raw_input("Enter album name: ")
-        artlist = artists.split('; ')
-        if len(artlist) > 1:
-            artists = artlist[0] + ' feat. '
-            artists = artists + ', '.join(artlist[1:])
-        else:
-            artists = artlist[0]
-        return title, artists, album, ''
+    try:
+        if results['results'] == []:
+            print "Could not find any metadata!"
+            title = raw_input("Enter title: ")
+            artists = raw_input("Enter artists (separated by ;): ")
+            album = raw_input("Enter album name: ")
+            artlist = artists.split('; ')
+            if len(artlist) > 1:
+                artists = artlist[0] + ' feat. '
+                artists = artists + ', '.join(artlist[1:])
+            else:
+                artists = artlist[0]
+            return title, artists, album, ''
+    except KeyError:
+        print "Error retrieving metadata"
+        sys.exit(1)
     print bcolors.WARNING + "Choose music title: " + bcolors.ENDC
     dcho = 0
     for x in results['results'][0]['recordings']:
@@ -147,7 +151,7 @@ def fingerprint(fn):
     else:
         artists = []
         title = results['results'][0]['recordings'][choice]['title']
-        for x in results['results'][0]['recordings'][0]['artists']:
+        for x in results['results'][0]['recordings'][choice]['artists']:
             artists.append(x['name'])
         artists = '; '.join(artists)
         artlist = artists.split('; ')
@@ -163,10 +167,11 @@ def fingerprint(fn):
         print str(count) + '. ' + x['title'] + ' -',
         try:
             print x['type']
-            if x['type'] == 'Single':
+            if x['type'] == 'Single' or x['title'] == title:
                 dcho = count
         except:
-            continue
+            print 'Album'
+            pass
         count = count + 1
     print str(count) + '. Manual entry'
     choice = raw_input("Enter choice [" + str(dcho) + "]: ")
