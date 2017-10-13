@@ -167,7 +167,7 @@ def fingerprint(fn):
         print str(count) + '. ' + x['title'] + ' -',
         try:
             print x['type']
-            if x['type'] == 'Single' or x['title'] == title:
+            if x['title'] == title and x['type'] == 'Single':
                 dcho = count
         except:
             print 'Album'
