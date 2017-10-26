@@ -18,13 +18,20 @@ import os
 import json
 import requests
 import shutil
+import pickle
+from difflib import SequenceMatcher
 
 # Import colorama for fun
 import colorama
 
 # Declare important constants (API keys, etc.)
-acoust_key = 'Qizu6HuhDq'
+keys = pickle.load(open('keys.dat'))
+acoust_key = keys['acoust-key']
 colorama.init()
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -36,13 +43,17 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 # Create function to get cover art
+
+
 def getCoverArt(mbid):
     # mbid - MusicBrainz ID
 
     if mbid is '':
-        raw_input('Download cover art and save as \'example.jpg\'. Press enter to continue tagging.')
+        raw_input(
+            'Download cover art and save as \'example.jpg\'. Press enter to continue tagging.')
         return
-    results = requests.get('http://coverartarchive.org/release-group/'+mbid+'/')
+    results = requests.get(
+        'http://coverartarchive.org/release-group/' + mbid + '/')
 
     resjson = json.loads(results.text)
 
@@ -52,6 +63,8 @@ def getCoverArt(mbid):
         shutil.copyfileobj(imgres.raw, f)
 
 # Create function to tag file with data
+
+
 def tagFile(fn, data):
     # fn - Filename
     # data - Title, Artist and Cover Art
@@ -68,9 +81,9 @@ def tagFile(fn, data):
     audiofile = MP3(fn, ID3=ID3)
     audiofile.tags.add(
         APIC(
-            encoding=3, # 3 is for utf-8
-            mime='image/jpeg', # image/jpeg or image/png
-            type=3, # 3 is for the cover image
+            encoding=3,  # 3 is for utf-8
+            mime='image/jpeg',  # image/jpeg or image/png
+            type=3,  # 3 is for the cover image
             desc=u'Cover',
             data=open('example.jpg').read()
         )
@@ -87,16 +100,20 @@ def tagFile(fn, data):
     os.rename(fn, artists + ' - ' + title + '.mp3')
 
 # Create function to get acoustID data from MP3 file
+
+
 def fingerprint(fn):
     # fn - Filename
     artists = []
     title = ''
     album = ''
     mbid = ''
+    mp3file = EasyID3(fn)
     count = 0
     try:
         results = acoustid.match(acoust_key, fn, parse=False)
-        albres = acoustid.match(acoust_key, fn, meta='releasegroups', parse=False)
+        albres = acoustid.match(
+            acoust_key, fn, meta='releasegroups', parse=False)
     except acoustid.NoBackendError:
         print(bcolors.FAIL + "Chromaprint tool not found" + bcolors.ENDC)
         sys.exit(1)
@@ -132,6 +149,8 @@ def fingerprint(fn):
         except:
             continue
         print str(count) + '. ' + '; '.join(artists) + ' - ' + x['title']
+        if similar(x['title'], mp3file['title'][0]) >= 0.5:
+            dcho = count
         count = count + 1
         artists = []
     print str(count) + '. Manual entry'
@@ -186,20 +205,28 @@ def fingerprint(fn):
 
     return title, artists, album, mbid
 
+
 # Main function
 if __name__ == '__main__':
-    if sys.argv[1] == 'all':
-        for x in [f for f in os.listdir(os.getcwd()) if f[-4:] == '.mp3']:
-            print(bcolors.HEADER + 'Now tagging - ' + x + bcolors.ENDC)
-            title, artist, album, mbid = fingerprint(x)
+    try:
+        if sys.argv[1] == 'all':
+            for x in [f for f in os.listdir(os.getcwd()) if f[-4:] == '.mp3']:
+                print(bcolors.HEADER + 'Now tagging - ' + x + bcolors.ENDC)
+                title, artist, album, mbid = fingerprint(x)
+                getCoverArt(mbid)
+                data = {'title': title, 'artist': artist, 'album': album}
+                tagFile(x, data)
+                print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
+        else:
+            print(bcolors.HEADER + 'Now tagging - ' + sys.argv[1] + bcolors.ENDC)
+            title, artist, album, mbid = fingerprint(sys.argv[1])
             getCoverArt(mbid)
             data = {'title': title, 'artist': artist, 'album': album}
-            tagFile(x, data)
+            tagFile(sys.argv[1], data)
             print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
-    else:
-        print(bcolors.HEADER + 'Now tagging - ' + sys.argv[1] + bcolors.ENDC)
-        title, artist, album, mbid = fingerprint(sys.argv[1])
-        getCoverArt(mbid)
-        data = {'title': title, 'artist': artist, 'album': album}
-        tagFile(sys.argv[1], data)
-        print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
+    except KeyboardInterrupt:
+        print bcolors.WARNING + 'Quitting tag' + bcolors.ENDC
+        exit(0)
+    except Exception, e:
+        print 'An error occured: %s' % e
+        exit(1)
