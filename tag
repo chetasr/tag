@@ -29,8 +29,10 @@ keys = pickle.load(open('keys.dat'))
 acoust_key = keys['acoust-key']
 colorama.init()
 
+
 def similar(a, b):
     return SequenceMatcher(None, a, b).ratio()
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -218,7 +220,8 @@ if __name__ == '__main__':
                 tagFile(x, data)
                 print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
         else:
-            print(bcolors.HEADER + 'Now tagging - ' + sys.argv[1] + bcolors.ENDC)
+            print(bcolors.HEADER + 'Now tagging - ' +
+                  sys.argv[1] + bcolors.ENDC)
             title, artist, album, mbid = fingerprint(sys.argv[1])
             getCoverArt(mbid)
             data = {'title': title, 'artist': artist, 'album': album}
