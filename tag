@@ -20,6 +20,7 @@ import requests
 import shutil
 import pickle
 from difflib import SequenceMatcher
+import argparse
 
 # Import colorama for fun
 import colorama
@@ -31,6 +32,8 @@ colorama.init()
 
 
 def similar(a, b):
+    a = a.lower()
+    b = b.lower()
     return SequenceMatcher(None, a, b).ratio()
 
 
@@ -104,7 +107,7 @@ def tagFile(fn, data):
 # Create function to get acoustID data from MP3 file
 
 
-def fingerprint(fn):
+def fingerprint(fn, auto=False):
     # fn - Filename
     artists = []
     title = ''
@@ -142,7 +145,8 @@ def fingerprint(fn):
     except KeyError:
         print "Error retrieving metadata"
         sys.exit(1)
-    print bcolors.WARNING + "Choose music title: " + bcolors.ENDC
+    if not auto:
+        print bcolors.WARNING + "Choose music title: " + bcolors.ENDC
     dcho = 0
     for x in results['results'][0]['recordings']:
         try:
@@ -150,17 +154,22 @@ def fingerprint(fn):
                 artists.append(y['name'])
         except:
             continue
-        print str(count) + '. ' + '; '.join(artists) + ' - ' + x['title']
+        if not auto:
+            print str(count) + '. ' + '; '.join(artists) + ' - ' + x['title']
         if similar(x['title'], mp3file['title'][0]) >= 0.5:
             dcho = count
         count = count + 1
         artists = []
-    print str(count) + '. Manual entry'
-    choice = raw_input("Enter choice [" + str(dcho) + "]: ")
-    if choice == '':
+    if not auto:
+        print str(count) + '. Manual entry'
+    if auto:
         choice = dcho
+    else:
+        choice = raw_input("Enter choice [" + str(dcho) + "]: ")
+        if choice == '':
+            choice = dcho
     choice = int(choice)
-    if int(choice) == count:
+    if choice == count:
         title = raw_input("Enter title: ")
         artists = raw_input("Enter artists (separated by ;): ")
         artlist = artists.split('; ')
@@ -183,21 +192,30 @@ def fingerprint(fn):
             artists = artlist[0]
 
     count = 0
-    print bcolors.WARNING + "Choose album:" + bcolors.ENDC
+    dcho = 0
+    if not auto:
+        print bcolors.WARNING + "Choose album:" + bcolors.ENDC
     for x in albres['results'][0]['releasegroups']:
-        print str(count) + '. ' + x['title'] + ' -',
+        if not auto:
+            print str(count) + '. ' + x['title'] + ' -',
         try:
-            print x['type']
-            if x['title'] == title and x['type'] == 'Single':
+            if not auto:
+                print x['type']
+            if similar(x['title'], title) >= 0.5 and x['type'] == 'Single':
                 dcho = count
         except:
-            print 'Album'
+            if not auto:
+                print 'Album'
             pass
         count = count + 1
-    print str(count) + '. Manual entry'
-    choice = raw_input("Enter choice [" + str(dcho) + "]: ")
-    if choice == '':
+    if not auto:
+        print str(count) + '. Manual entry'
+    if auto:
         choice = dcho
+    else:
+        choice = raw_input("Enter choice [" + str(dcho) + "]: ")
+        if choice == '':
+            choice = dcho
     choice = int(choice)
     if choice == count:
         album = raw_input("Enter album name: ")
@@ -205,16 +223,23 @@ def fingerprint(fn):
         album = albres['results'][0]['releasegroups'][choice]['title']
         mbid = albres['results'][0]['releasegroups'][choice]['id']
 
+    print bcolors.WARNING + title + ' - ' + artists + ' - ' + album + bcolors.ENDC
+
     return title, artists, album, mbid
 
 
 # Main function
 if __name__ == '__main__':
     try:
-        if sys.argv[1] == 'all':
+        parser = argparse.ArgumentParser()
+        parser.add_argument("file", help='file to tag')
+        parser.add_argument(
+            '-a', "--auto", help='automatically tag without user input', action='store_true')
+        args = parser.parse_args()
+        if args.file == 'all':
             for x in [f for f in os.listdir(os.getcwd()) if f[-4:] == '.mp3']:
                 print(bcolors.HEADER + 'Now tagging - ' + x + bcolors.ENDC)
-                title, artist, album, mbid = fingerprint(x)
+                title, artist, album, mbid = fingerprint(x, args.auto)
                 getCoverArt(mbid)
                 data = {'title': title, 'artist': artist, 'album': album}
                 tagFile(x, data)
@@ -228,8 +253,10 @@ if __name__ == '__main__':
             tagFile(sys.argv[1], data)
             print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
     except KeyboardInterrupt:
+        print
         print bcolors.WARNING + 'Quitting tag' + bcolors.ENDC
         exit(0)
     except Exception, e:
+        print
         print 'An error occured: %s' % e
         exit(1)

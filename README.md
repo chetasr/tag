@@ -8,9 +8,21 @@ The project also needs the [Chromaprint](https://github.com/acoustid/chromaprint
 ## how to use
 Run the script with your mp3 files
 ```
-./tag my_music.mp3
+> ./tag -h
+usage: tag [-h] [-a] file
+
+positional arguments:
+  file        file to tag
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -a, --auto  automatically tag without user input
 ```
 You can also tag mutiple files at once
 ```
-./tag all
+ > ./tag all
+```
+Tag files automatically using the ```-a``` option
+```
+> ./tag -a my_music.mp3
 ```
