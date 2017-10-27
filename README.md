@@ -18,7 +18,7 @@ optional arguments:
   -h, --help  show this help message and exit
   -a, --auto  automatically tag without user input
 ```
-You can also tag mutiple files at once
+You can also tag multiple files at once
 ```
  > ./tag all
 ```
