@@ -9,9 +9,6 @@ from mutagen.id3 import ID3, APIC, error
 from mutagen.easyid3 import EasyID3
 import mutagen.id3
 
-# Import Artwork library
-import itunes
-
 # Import other necessary libraries
 import sys
 import os
@@ -26,7 +23,7 @@ import argparse
 import colorama
 
 # Declare important constants (API keys, etc.)
-keys = pickle.load(open('keys.dat'))
+keys = pickle.load(open('keys.dat', 'rb'))
 acoust_key = keys['acoust-key']
 colorama.init()
 
@@ -64,7 +61,7 @@ def getCoverArt(mbid):
 
     imgres = requests.get(resjson['images'][0]['image'], stream=True)
     with open('example.jpg', 'wb') as f:
-        print bcolors.HEADER + 'Downloading cover art...' + bcolors.ENDC
+        print(bcolors.HEADER + 'Downloading cover art...' + bcolors.ENDC)
         shutil.copyfileobj(imgres.raw, f)
 
 # Create function to tag file with data
@@ -131,7 +128,7 @@ def fingerprint(fn, auto=False):
 
     try:
         if results['results'] == []:
-            print "Could not find any metadata!"
+            print("Could not find any metadata!")
             title = raw_input("Enter title: ")
             artists = raw_input("Enter artists (separated by ;): ")
             album = raw_input("Enter album name: ")
@@ -143,10 +140,10 @@ def fingerprint(fn, auto=False):
                 artists = artlist[0]
             return title, artists, album, ''
     except KeyError:
-        print "Error retrieving metadata"
+        print("Error retrieving metadata")
         sys.exit(1)
     if not auto:
-        print bcolors.WARNING + "Choose music title: " + bcolors.ENDC
+        print(bcolors.WARNING + "Choose music title: " + bcolors.ENDC)
     dcho = 0
     for x in results['results'][0]['recordings']:
         try:
@@ -155,13 +152,13 @@ def fingerprint(fn, auto=False):
         except:
             continue
         if not auto:
-            print str(count) + '. ' + '; '.join(artists) + ' - ' + x['title']
+            print(str(count) + '. ' + '; '.join(artists) + ' - ' + x['title'])
         if similar(x['title'], mp3file['title'][0]) >= 0.5:
             dcho = count
         count = count + 1
         artists = []
     if not auto:
-        print str(count) + '. Manual entry'
+        print(str(count) + '. Manual entry')
     if auto:
         choice = dcho
     else:
@@ -194,22 +191,22 @@ def fingerprint(fn, auto=False):
     count = 0
     dcho = 0
     if not auto:
-        print bcolors.WARNING + "Choose album:" + bcolors.ENDC
+        print(bcolors.WARNING + "Choose album:" + bcolors.ENDC)
     for x in albres['results'][0]['releasegroups']:
         if not auto:
-            print str(count) + '. ' + x['title'] + ' -',
+            print(str(count) + '. ' + x['title'] + ' -',)
         try:
             if not auto:
-                print x['type']
+                print(x['type'])
             if similar(x['title'], title) >= 0.5 and x['type'] == 'Single':
                 dcho = count
         except:
             if not auto:
-                print 'Album'
+                print('Album')
             pass
         count = count + 1
     if not auto:
-        print str(count) + '. Manual entry'
+        print(str(count) + '. Manual entry')
     if auto:
         choice = dcho
     else:
@@ -223,7 +220,7 @@ def fingerprint(fn, auto=False):
         album = albres['results'][0]['releasegroups'][choice]['title']
         mbid = albres['results'][0]['releasegroups'][choice]['id']
 
-    print bcolors.WARNING + title + ' - ' + artists + ' - ' + album + bcolors.ENDC
+    print(bcolors.WARNING + title + ' - ' + artists + ' - ' + album + bcolors.ENDC)
 
     return title, artists, album, mbid
 
@@ -243,7 +240,7 @@ if __name__ == '__main__':
                 getCoverArt(mbid)
                 data = {'title': title, 'artist': artist, 'album': album}
                 tagFile(x, data)
-                print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
+                print(bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC)
         else:
             print(bcolors.HEADER + 'Now tagging - ' +
                   sys.argv[1] + bcolors.ENDC)
@@ -251,12 +248,12 @@ if __name__ == '__main__':
             getCoverArt(mbid)
             data = {'title': title, 'artist': artist, 'album': album}
             tagFile(sys.argv[1], data)
-            print bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC
+            print(bcolors.OKGREEN + 'Tagging successful' + bcolors.ENDC)
     except KeyboardInterrupt:
-        print
-        print bcolors.WARNING + 'Quitting tag' + bcolors.ENDC
+        print()
+        print(bcolors.WARNING + 'Quitting tag' + bcolors.ENDC)
         exit(0)
-    except Exception, e:
-        print
-        print 'An error occured: %s' % e
+    except Exception:
+        print()
+        print('An error occured')
         exit(1)
