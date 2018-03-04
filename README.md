@@ -6,6 +6,8 @@ command line mp3 tagger
 
 Use `pip install -r requirements.txt` to install the dependencies. The project also needs the [Chromaprint](https://github.com/acoustid/chromaprint) tool to work.
 
+Head over to [AcoustID](https://acoustid.org/) and get an API key for the app to calculate fingerprints.
+
 ## how to use
 
 Run the script with your mp3 files
