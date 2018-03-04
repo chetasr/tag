@@ -1,5 +1,9 @@
-pyacoustid
-mutagen
-colorama
-itunes
-requests
+audioread==2.1.5
+certifi==2018.1.18
+chardet==3.0.4
+colorama==0.3.9
+idna==2.6
+mutagen==1.40.0
+pyacoustid==1.1.5
+requests==2.18.4
+urllib3==1.22
